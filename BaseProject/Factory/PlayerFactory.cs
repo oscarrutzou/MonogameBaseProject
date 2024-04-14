@@ -13,6 +13,7 @@ namespace BaseProject.Factory
             playerGo.Transform.Scale = new Vector2(4, 4);
             playerGo.AddComponent<SpriteRenderer>();
             playerGo.AddComponent<Animator>();
+            playerGo.AddComponent<Collider>();
             playerGo.AddComponent<Player>();
 
             return playerGo;

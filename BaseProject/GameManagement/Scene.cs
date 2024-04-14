@@ -97,6 +97,10 @@ namespace BaseProject.GameManagement
             SceneData.GameObjectLists[gameObject.Type].Remove(gameObject);
         }
 
+        /// <summary>
+        /// Draws everything that is not the Gui GameObjectType with the WorldCam.
+        /// </summary>
+        /// <param name="spriteBatch"></param>
         public virtual void DrawInWorld(SpriteBatch spriteBatch)
         {
             foreach (GameObjectTypes type in SceneData.GameObjectLists.Keys)
@@ -110,6 +114,10 @@ namespace BaseProject.GameManagement
             }
         }
 
+        /// <summary>
+        /// Draws the Gui GameObjects on the UiCam.
+        /// </summary>
+        /// <param name="spriteBatch"></param>
         public virtual void DrawOnScreen(SpriteBatch spriteBatch)
         {
             // Draw all Gui GameObjects in the active scene.

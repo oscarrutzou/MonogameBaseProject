@@ -7,24 +7,36 @@ namespace BaseProject.GameManagement
     {
         public Vector2 position;          // The camera's position in the game world.
         public Vector2 origin;
-        private float zoom;                // The zoom level of the camera.
+        public float zoom;                // The zoom level of the camera.
         private Matrix transformMatrix;    // A transformation matrix used for rendering.
         public bool moveable;
+
+        private float maxZoom;
 
         public Camera(bool moveable)
         {
             position = Vector2.Zero;   // Initialize the camera's position at the origin.
-            zoom = 1.0f;               // Initialize the camera's zoom level to 1.0
-            origin = new Vector2(GameWorld.Instance.GfxManager.PreferredBackBufferWidth / 2, GameWorld.Instance.GfxManager.PreferredBackBufferHeight / 2);
+            zoom = 1f;                 // Initialize the camera's zoom level to 1f
+            maxZoom = 2.5f;            // Any higher will remove sprites since it would be inside the camera 
+            SetOriginCenter();
             this.moveable = moveable;
         }
 
-        public void Move(Vector2 delta)
+        /// <summary>
+        /// Call this method again if the screen size gets changed in the middle of the game.
+        /// </summary>
+        public void SetOriginCenter()
         {
-            // Update the camera's position by adding a delta vector.
-            position += delta;
+            origin = new Vector2(GameWorld.Instance.GfxManager.PreferredBackBufferWidth / 2, GameWorld.Instance.GfxManager.PreferredBackBufferHeight / 2);
         }
 
+        /// <summary>
+        /// Update the camera's position by adding a vector.
+        /// </summary>
+        /// <param name="delta"></param>
+        public void Move(Vector2 delta) => position += delta;
+
+        #region Parameters
         public Vector2 TopLeft
         {
             get { return position - new Vector2(GameWorld.Instance.GfxManager.PreferredBackBufferWidth / 2, GameWorld.Instance.GfxManager.PreferredBackBufferHeight / 2); }
@@ -69,7 +81,19 @@ namespace BaseProject.GameManagement
             get { return position + new Vector2(GameWorld.Instance.GfxManager.PreferredBackBufferWidth / 2, GameWorld.Instance.GfxManager.PreferredBackBufferHeight / 2); }
         }
 
+        #endregion
 
+        /// <summary>
+        /// Change zoom amount, but is limited by some paramaters like maxzoom.
+        /// </summary>
+        /// <param name="amount"></param>
+        public void ChangeZoom(float amount)
+        {
+            zoom += amount;
+
+            if (zoom < 1f) zoom = 1f; //Cant get under 1 zoom
+            else if (zoom > maxZoom) zoom = maxZoom;
+        }
 
         public Matrix GetMatrix()
         {

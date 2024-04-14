@@ -23,6 +23,8 @@ namespace BaseProject.CompositPattern.Characters
             sr.SetLayerDepth(LAYERDEPTH.Player);
 
             Animator animator = GameObject.GetComponent<Animator>();
+            //animator.AddAnimation(GlobalAnimations.Animations[AnimNames.TestWizardRightIndividualFrames]); //Set all the animations
+            //animator.PlayAnimation(AnimNames.TestWizardRightIndividualFrames);
             animator.AddAnimation(GlobalAnimations.Animations[AnimNames.TestWizardRightSheet]); //Set all the animations
             animator.PlayAnimation(AnimNames.TestWizardRightSheet);
         }

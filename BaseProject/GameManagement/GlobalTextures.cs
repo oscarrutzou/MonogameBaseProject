@@ -11,7 +11,9 @@ namespace BaseProject.GameManagement
         Pixel
     }
 
-    // Dictionary of all textures
+    /// <summary>
+    /// Contains all the textures we need to use, so we know they are in our project from the start.
+    /// </summary>
     public static class GlobalTextures
     {
         public static Dictionary<TextureNames, Texture2D> Textures { get; private set; }

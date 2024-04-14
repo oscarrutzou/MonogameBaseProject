@@ -90,11 +90,11 @@ namespace BaseProject.CompositPattern
             {
                 currentAnimation = animations[animationName];
                 spriteRenderer.UsingAnimation = true;
+                frameDuration = 1f / currentAnimation.FPS;
 
                 if (currentAnimation.UseSpriteSheet)
                 {
                     spriteRenderer.SourceRectangle = currentAnimation.SourceRectangle;
-                    frameDuration = 1f / currentAnimation.FPS;
                     spriteRenderer.Sprite = currentAnimation.Sprites[0]; //Only one animation in the spritesheet
                     MaxFrames = spriteRenderer.Sprite.Width / currentAnimation.FrameDimensions;
                 }

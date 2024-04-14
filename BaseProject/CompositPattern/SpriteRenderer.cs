@@ -58,7 +58,7 @@ namespace BaseProject.CompositPattern
 
             drawPos = GameObject.Transform.Position;
 
-            if (animator != null)
+            if (animator != null && animator.currentAnimation.UseSpriteSheet)
             {
                 drawPos += new Vector2(animator.MaxFrames * animator.currentAnimation.FrameDimensions * GameObject.Transform.Scale.X / 2 - (float)(animator.currentAnimation.FrameDimensions * 2), 0);
             }

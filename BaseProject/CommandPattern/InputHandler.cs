@@ -6,6 +6,12 @@ using BaseProject.CommandPattern.Commands;
 
 namespace BaseProject.CommandPattern
 {
+    public enum ScrollWheelState
+    {
+        Up,
+        Down
+    }
+
     public class InputHandler
     {
         #region Properties
@@ -17,37 +23,47 @@ namespace BaseProject.CommandPattern
         private Dictionary<Keys, ICommand> keybindsButtonDown = new Dictionary<Keys, ICommand>();
         private Dictionary<ButtonState, ICommand> mouseButtonUpdateCommands = new Dictionary<ButtonState, ICommand>();
         private Dictionary<ButtonState, ICommand> mouseButtonDownCommands = new Dictionary<ButtonState, ICommand>();
+        private Dictionary<ScrollWheelState, ICommand> scrollWheelCommands = new Dictionary<ScrollWheelState, ICommand>();
 
         public Vector2 mouseInWorld, mouseOnUI;
         public bool mouseOutOfBounds;
-
+        public float zoom = 1f;
         #endregion
 
         private InputHandler()
         {
-            AddUpdateCommand(Keys.Escape, new QuitCommand());
+            AddKeyUpdateCommand(Keys.Escape, new QuitCommand());
+
+            AddScrollWheelCommand(ScrollWheelState.Up, new ZoomCommand(-0.1f));
+            AddScrollWheelCommand(ScrollWheelState.Down, new ZoomCommand(0.1f));
         }
 
         #region Command
-        public void AddUpdateCommand(Keys inputKey, ICommand command)
+        public void AddKeyUpdateCommand(Keys inputKey, ICommand command)
         {
             keybindsUpdate.Add(inputKey, command);
         }
 
-        public void AddButtonDownCommand(Keys inputKey, ICommand command)
+        public void AddKeyButtonDownCommand(Keys inputKey, ICommand command)
         {
             keybindsButtonDown.Add(inputKey, command);
         }
 
-        public void AddUpdateCommand(ButtonState inputButton, ICommand command)
+        public void AddMouseUpdateCommand(ButtonState inputButton, ICommand command)
         {
             mouseButtonUpdateCommands.Add(inputButton, command);
         }
 
-        public void AddButtonDownCommand(ButtonState inputButton, ICommand command)
+        public void AddMouseButtonDownCommand(ButtonState inputButton, ICommand command)
         {
             mouseButtonDownCommands.Add(inputButton, command);
         }
+
+        public void AddScrollWheelCommand(ScrollWheelState scrollWheelState, ICommand command)
+        {
+            scrollWheelCommands.Add(scrollWheelState, command);
+        }
+
 
         private KeyboardState previousKeyState;
         private MouseState previousMouseState;
@@ -113,6 +129,14 @@ namespace BaseProject.CommandPattern
                 && mouseButtonDownCommands.TryGetValue(ButtonState.Pressed, out ICommand cmdBdRight))
             {
                 cmdBdRight.Execute();
+            }
+
+            if (previousMouseState.ScrollWheelValue != mouseState.ScrollWheelValue
+                && scrollWheelCommands.TryGetValue(
+                    mouseState.ScrollWheelValue > previousMouseState.ScrollWheelValue 
+                    ? ScrollWheelState.Up : ScrollWheelState.Down, out ICommand cmdScroll))
+            {
+                cmdScroll.Execute();
             }
 
             previousMouseState = mouseState;

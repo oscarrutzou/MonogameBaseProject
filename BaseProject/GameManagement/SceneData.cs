@@ -10,7 +10,7 @@ namespace BaseProject.GameManagement
         /// <summary>
         /// Every GameObject will be in these lists. There is a default type if its not important where the GameObject is placed
         /// </summary>
-        public static Dictionary<GameObjectTypes, List<GameObject>> GameObjectLists = new Dictionary<GameObjectTypes, List<GameObject>>();
+        public static Dictionary<GameObjectTypes, List<GameObject>> GameObjectLists;
 
         /// <summary>
         /// Generatates lists based on GameObjectTypes Enum
@@ -18,6 +18,8 @@ namespace BaseProject.GameManagement
         /// </summary>
         public static void GenereateGameObjectDicionary()
         {
+            GameObjectLists = new Dictionary<GameObjectTypes, List<GameObject>>();
+
             foreach (GameObjectTypes type in Enum.GetValues(typeof(GameObjectTypes)))
             {
                 GameObjectLists.Add(type, new List<GameObject>());
