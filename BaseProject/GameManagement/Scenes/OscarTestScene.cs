@@ -7,6 +7,8 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using BaseProject.ObserverPattern;
+using System.Collections.Generic;
+using System;
 namespace BaseProject.GameManagement.Scenes
 {
     public class OscarTestScene : Scene, IObserver 
@@ -16,8 +18,23 @@ namespace BaseProject.GameManagement.Scenes
 
         private Vector2 velocity;
 
+        Dictionary<GameObjectTypes, List<GameObject>> gameObjectLists = new Dictionary<GameObjectTypes, List<GameObject>>();
+
+
         public override void Initialize()
         {
+            foreach (GameObjectTypes type in Enum.GetValues(typeof(GameObjectTypes)))
+            {
+                gameObjectLists.Add(type, new List<GameObject>());
+            }
+
+
+            foreach (var item in gameObjectLists.Keys)
+            {
+                if (item != GameObjectTypes.Player) continue;
+                gameObjectLists[GameObjectTypes.Player].Add(new GameObject());
+            }
+
 
             MakePlayer();
 
@@ -61,7 +78,7 @@ namespace BaseProject.GameManagement.Scenes
 
         public override void DrawOnScreen(SpriteBatch spriteBatch)
         {
-            spriteBatch.DrawString(GlobalTextures.DefaultFont, velocity.ToString(), Vector2.Zero, Color.White);
+            spriteBatch.DrawString(GlobalTextures.DefaultFont, velocity.ToString(), Vector2.Zero, Color.Black);
 
             base.DrawOnScreen(spriteBatch);
         }

@@ -12,7 +12,7 @@ namespace BaseProject.CompositPattern
     {
         Cell,
         Player,
-        Enemy,
+        //Enemy,
         Gui,
         Default, //Not set
     }

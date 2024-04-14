@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
 using BaseProject.CompositPattern;
 using BaseProject.CompositPattern.Grid;
-
+using System;
 namespace BaseProject.GameManagement
 {
     public enum ScenesNames
@@ -21,8 +21,6 @@ namespace BaseProject.GameManagement
 
     public abstract class Scene
     {
-        // We have a data stored on each scene, to make it easy to add and remove gameObjects
-        public bool hasFadeOut;
         public bool isPaused;
 
         private List<GameObject> newGameObjects = new List<GameObject>();
@@ -31,15 +29,20 @@ namespace BaseProject.GameManagement
         public abstract void Initialize();
 
         /// <summary>
-        /// The base update on the scene handles all the gameobjects and calls Update on them all. 
+        /// The base update on the scene handles all the GameObjects and calls Update on them all.
         /// </summary>
         public virtual void Update(GameTime gameTime)
         {
             CleanUp();
 
-            foreach (GameObject gameObject in SceneData.gameObjects)
+            if (isPaused) return;
+
+            foreach (GameObjectTypes type in SceneData.GameObjectLists.Keys)
             {
-                gameObject.Update(gameTime);
+                foreach (GameObject gameObject in SceneData.GameObjectLists[type])
+                {
+                    gameObject.Update(gameTime);
+                }
             }
 
             CheckCollision();
@@ -50,20 +53,22 @@ namespace BaseProject.GameManagement
 
         public void Destroy(GameObject go) => destoroyedGameObjects.Add(go);
 
+        /// <summary>
+        /// <para>The method adds the newGameobjects to different lists, and calls the Awake and Start on the Objects, so the objects starts properly.</para>
+        /// <para>It also removes the gameobjects if there are any</para>
+        /// </summary>
         private void CleanUp()
         {
             if (newGameObjects.Count == 0 && destoroyedGameObjects.Count == 0) return; //Shouldnt run since there is no new changes
 
             for (int i = 0; i < newGameObjects.Count; i++)
             {
-                SceneData.gameObjects.Add(newGameObjects[i]);
                 AddToCategory(newGameObjects[i]);
                 newGameObjects[i].Awake();
                 newGameObjects[i].Start();
             }
             for (int i = 0; i < destoroyedGameObjects.Count; i++)
             {
-                SceneData.gameObjects.Remove(destoroyedGameObjects[i]);
                 RemoveFromCategory(destoroyedGameObjects[i]);
             }
 
@@ -71,46 +76,34 @@ namespace BaseProject.GameManagement
             destoroyedGameObjects.Clear();
         }
 
+        /// <summary>
+        /// Adds the gameObject to the correct list based on the gameobjects type.
+        /// </summary>
+        /// <param name="gameObject"></param>
         private void AddToCategory(GameObject gameObject)
         {
-            switch (gameObject.Type)
-            {
-                case GameObjectTypes.Cell:
-                    SceneData.cells.Add(gameObject.GetComponent<Cell>());
-                    break;
-                case GameObjectTypes.Gui:
-                    SceneData.guis.Add(gameObject);
-                    break;
-                default:
-                    SceneData.defaults.Add(gameObject);
-                    break;
-            }
+            // We know the Lists gets made and only gets Cleared when changing scene,
+            // so we can assume that the lists are already there.
+            // If something went wrong, the compiler will send a error anyway, so we dont need a extra check, for small projects like these.
+            SceneData.GameObjectLists[gameObject.Type].Add(gameObject);
         }
 
+        /// <summary>
+        /// Removes the gameObject from the respective list that they are in.
+        /// </summary>
+        /// <param name="gameObject"></param>
         private void RemoveFromCategory(GameObject gameObject)
         {
-            switch (gameObject.Type)
-            {
-                case GameObjectTypes.Cell:
-                    SceneData.cells.Remove(gameObject.GetComponent<Cell>());
-                    break;
-                case GameObjectTypes.Gui:
-                    SceneData.guis.Remove(gameObject);
-                    break;
-                default:
-                    SceneData.defaults.Remove(gameObject);
-                    break;
-            }
+            SceneData.GameObjectLists[gameObject.Type].Remove(gameObject);
         }
 
         public virtual void DrawInWorld(SpriteBatch spriteBatch)
         {
-            //DrawSceenColor();
-
-            //// Draw all GameObjects that is not Gui in the active scene.
-            foreach (GameObject gameObject in SceneData.gameObjects)
+            foreach (GameObjectTypes type in SceneData.GameObjectLists.Keys)
             {
-                if (gameObject.Type != GameObjectTypes.Gui)
+                if (type == GameObjectTypes.Gui) continue; //Skip GUI list
+
+                foreach (GameObject gameObject in SceneData.GameObjectLists[type])
                 {
                     gameObject.Draw(spriteBatch);
                 }
@@ -120,35 +113,40 @@ namespace BaseProject.GameManagement
         public virtual void DrawOnScreen(SpriteBatch spriteBatch)
         {
             // Draw all Gui GameObjects in the active scene.
-            foreach (GameObject guiGameObject in SceneData.guis)
+            foreach (GameObject gameObject in SceneData.GameObjectLists[GameObjectTypes.Gui])
             {
-                guiGameObject.Draw(spriteBatch);
+                gameObject.Draw(spriteBatch);
             }
+        }
+
+        public virtual void DrawSceenColor()
+        {
+            GameWorld.Instance.GraphicsDevice.Clear(Color.Beige);
         }
 
         public void CheckCollision()
         {
-            foreach (GameObject go1 in SceneData.gameObjects)
-            {
-                foreach (GameObject go2 in SceneData.gameObjects)
-                {
-                    if (go1 == go2) continue;
-                    //Dosent check between enemies
-                    //Enemy enemy1 = go1.GetComponent<Enemy>();
-                    //Enemy enemy2 = go2.GetComponent<Enemy>();
-                    //if (enemy1 != null && enemy2 != null) continue; //Shouldnt make collisions between 2 enemies.
+            //foreach (GameObject go1 in SceneData.GameObjects)
+            //{
+            //    foreach (GameObject go2 in SceneData.GameObjects)
+            //    {
+            //        if (go1 == go2) continue;
+            //        //Dosent check between enemies
+            //        //Enemy enemy1 = go1.GetComponent<Enemy>();
+            //        //Enemy enemy2 = go2.GetComponent<Enemy>();
+            //        //if (enemy1 != null && enemy2 != null) continue; //Shouldnt make collisions between 2 enemies.
 
-                    Collider col1 = go1.GetComponent<Collider>();
-                    Collider col2 = go2.GetComponent<Collider>();
+            //        Collider col1 = go1.GetComponent<Collider>();
+            //        Collider col2 = go2.GetComponent<Collider>();
 
-                    //Check base collisionbox
-                    if (col1 != null && col2 != null && col1.CollisionBox.Intersects(col2.CollisionBox))
-                    {
-                        go1.OnCollisionEnter(col2);
-                        go2.OnCollisionEnter(col1);
-                    }
-                }
-            }
+            //        //Check base collisionbox
+            //        if (col1 != null && col2 != null && col1.CollisionBox.Intersects(col2.CollisionBox))
+            //        {
+            //            go1.OnCollisionEnter(col2);
+            //            go2.OnCollisionEnter(col1);
+            //        }
+            //    }
+            //}
         }
     }
 }

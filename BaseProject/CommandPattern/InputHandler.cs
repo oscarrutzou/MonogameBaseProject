@@ -88,17 +88,32 @@ namespace BaseProject.CommandPattern
         private void UpdateMouseCommands(MouseState mouseState)
         {
             // Check the left mouse button
-            if (mouseState.LeftButton == ButtonState.Pressed && mouseButtonUpdateCommands.TryGetValue(ButtonState.Pressed, out ICommand cmd))
+            if (mouseState.LeftButton == ButtonState.Pressed 
+                && mouseButtonUpdateCommands.TryGetValue(ButtonState.Pressed, out ICommand cmdLeft))
             {
-                cmd.Execute();
+                cmdLeft.Execute();
             }
 
-            if (previousMouseState.LeftButton == ButtonState.Released && mouseState.LeftButton == ButtonState.Pressed && mouseButtonDownCommands.TryGetValue(ButtonState.Pressed, out ICommand cmdBd))
+            if (previousMouseState.LeftButton == ButtonState.Released 
+                && mouseState.LeftButton == ButtonState.Pressed 
+                && mouseButtonDownCommands.TryGetValue(ButtonState.Pressed, out ICommand cmdBdLeft))
             {
-                cmdBd.Execute();
+                cmdBdLeft.Execute();
+            }
+            
+            // Checks the right mouse button
+            if (mouseState.RightButton == ButtonState.Pressed 
+                && mouseButtonUpdateCommands.TryGetValue(ButtonState.Pressed, out ICommand cmdRight))
+            {
+                cmdRight.Execute();
             }
 
-            // Repeat similar checks for other button clicks.
+            if (previousMouseState.RightButton == ButtonState.Released 
+                && mouseState.RightButton == ButtonState.Pressed 
+                && mouseButtonDownCommands.TryGetValue(ButtonState.Pressed, out ICommand cmdBdRight))
+            {
+                cmdBdRight.Execute();
+            }
 
             previousMouseState = mouseState;
         }
