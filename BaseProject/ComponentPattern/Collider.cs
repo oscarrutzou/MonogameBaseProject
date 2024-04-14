@@ -22,8 +22,8 @@ namespace BaseProject.CompositPattern
 
                 if (animator != null)
                 {
-                    width = collisionWidth > 0 ? collisionWidth : animator.currentAnimation.FrameDimensions;
-                    height = collisionHeight > 0 ? collisionHeight : animator.currentAnimation.FrameDimensions;
+                    width = collisionWidth > 0 ? collisionWidth : animator.CurrentAnimation.FrameDimensions;
+                    height = collisionHeight > 0 ? collisionHeight : animator.CurrentAnimation.FrameDimensions;
                 }
                 else
                 {
@@ -58,6 +58,11 @@ namespace BaseProject.CompositPattern
             DrawRectangle(CollisionBox, spriteBatch, offset);
         }
 
+        /// <summary>
+        /// Set custom collsionBox
+        /// </summary>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
         public void SetCollisionBox(int width, int height)
         {
             collisionWidth = width;
@@ -71,6 +76,22 @@ namespace BaseProject.CompositPattern
             this.offset = offset;
         }
 
+        /// <summary>
+        /// Resets the custom collision box, and offset if it has been set
+        /// </summary>
+        public void ResetCustomCollsionBox()
+        {
+            offset = Vector2.Zero;
+            collisionHeight = 0;
+            collisionWidth = 0;
+        }
+
+        /// <summary>
+        /// Draws a debug line around the rectangle. Remember that it dosent show if the zoom is more that default.
+        /// </summary>
+        /// <param name="collisionBox"></param>
+        /// <param name="spriteBatch"></param>
+        /// <param name="vectorOffSet"></param>
         private void DrawRectangle(Rectangle collisionBox, SpriteBatch spriteBatch, Vector2 vectorOffSet)
         {
             Vector2 colBoxPos = new Vector2(collisionBox.X, collisionBox.Y) + vectorOffSet;

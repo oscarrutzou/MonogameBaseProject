@@ -14,7 +14,7 @@ namespace BaseProject.CommandPattern.Commands
 
         public void Execute()
         {
-            GameWorld.Instance.WorldCam.ChangeZoom(zoomAmount);
+            GameWorld.Instance.WorldCam.ChangeZoom(zoomAmount); // Only change zoom on worldCam
         }
     }
 }

@@ -20,18 +20,21 @@ namespace BaseProject.CompositPattern
 
     public class SpriteRenderer : Component
     {
+        #region Properties
         public Texture2D Sprite { get; set; }
         public Color Color { get; set; } = Color.White;
-
         public Vector2 Origin { get; set; }
         public bool IsCentered = true;
-        private float LayerDepth;
         public LAYERDEPTH LayerName { get; private set; } = LAYERDEPTH.Default;
         public SpriteEffects SpriteEffects { get; set; } = SpriteEffects.None;
+        private float LayerDepth;
+        private Vector2 drawPos;
 
+        // For the animation draw calls
         public Rectangle SourceRectangle;
         public bool UsingAnimation;
         private Animator animator;
+        #endregion
 
         public SpriteRenderer(GameObject gameObject) : base(gameObject)
         {
@@ -49,7 +52,6 @@ namespace BaseProject.CompositPattern
             LayerDepth = (float)LayerName / (Enum.GetNames(typeof(LAYERDEPTH)).Length - 1);
         }
 
-        private Vector2 drawPos;
         public override void Draw(SpriteBatch spriteBatch)
         {
             if (Sprite == null) return;
@@ -58,13 +60,12 @@ namespace BaseProject.CompositPattern
 
             drawPos = GameObject.Transform.Position;
 
-            if (animator != null && animator.currentAnimation.UseSpriteSheet)
+            if (animator != null && animator.CurrentAnimation.UseSpriteSheet)
             {
-                drawPos += new Vector2(animator.MaxFrames * animator.currentAnimation.FrameDimensions * GameObject.Transform.Scale.X / 2 - (float)(animator.currentAnimation.FrameDimensions * 2), 0);
+                drawPos += new Vector2(animator.MaxFrames * animator.CurrentAnimation.FrameDimensions * GameObject.Transform.Scale.X / 2 - (float)(animator.CurrentAnimation.FrameDimensions * 2), 0);
             }
             //Draws the sprite, and if there is a sourcerectangle set, then it uses that.
             spriteBatch.Draw(Sprite, drawPos, SourceRectangle == Rectangle.Empty ? null : SourceRectangle, Color, GameObject.Transform.Rotation, Origin, GameObject.Transform.Scale, SpriteEffects, LayerDepth);
-
 
         }
 

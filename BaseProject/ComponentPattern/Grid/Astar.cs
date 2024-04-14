@@ -26,53 +26,62 @@ namespace BaseProject.CompositPattern.Grid
 
         public List<GameObject> FindPath(Point start, Point goal)
         {
-            ResetCells();
+            ResetCells(); // Gets the Cells ready
 
-            open = new HashSet<GameObject>();
-            closed = new HashSet<GameObject>();
-            if (!cells.ContainsKey(start) || !cells.ContainsKey(goal))
+            open = new HashSet<GameObject>(); // Cells to check
+            closed = new HashSet<GameObject>(); // Checkes cells
+            if (!cells.ContainsKey(start) || !cells.ContainsKey(goal)) //Makes sure the cell start and end isnt the same
             {
                 return null;
             }
 
-            open.Add(cells[start]);
+            open.Add(cells[start]); // Starts with the start cell
 
-            while (open.Count > 0)
+            while (open.Count > 0) 
             {
-                GameObject curCellGo = open.First();
+                GameObject curCellGo = open.First(); // Gets the first object
                 foreach (GameObject cellGo in open)
                 {
                     Cell cell = cellGo.GetComponent<Cell>();
                     Cell curCell = curCellGo.GetComponent<Cell>();
-                    if (cell.F < curCell.F || cell.F == curCell.F && cell.H < curCell.H)
+                    if (cell.F < curCell.F || cell.F == curCell.F && cell.H < curCell.H) // Takes the closest cell
                     {
                         curCellGo = cellGo;
                     }
                 }
-                open.Remove(curCellGo);
-                closed.Add(curCellGo); //Check is complete
 
+                // Check is complete, so we can move it from the unchecked HashSet to the checked.
+                open.Remove(curCellGo); 
+                closed.Add(curCellGo);
+
+                // Gets the Cell component
                 Cell newCurCell = curCellGo.GetComponent<Cell>();
 
+                // Checks if its on the Goal grid position, if its is, we have found the path
                 if (newCurCell.GameObject.Transform.GridPosition.X == goal.X && newCurCell.GameObject.Transform.GridPosition.Y == goal.Y)
                 {
-                    //path found!
+                    // Path found!
                     return RetracePath(cells[start], cells[goal]);
                 }
 
+                // Gets neighbor GameObjects from the new postion, checks all 8 directions.
                 List<GameObject> neighbors = GetNeighbors(newCurCell.GameObject.Transform.GridPosition);
 
                 foreach (GameObject neighborGo in neighbors)
                 {
-                    if (closed.Contains(neighborGo)) continue;
+                    if (closed.Contains(neighborGo)) continue; // Dont check objects that have been checked.
+
+                    // Finds the G cost from the start node to the current node
+                    throw new Exception("Check the GetDistance to make sure it gets the start pos is used");
                     int newMovementCostToNeighbor = newCurCell.G + newCurCell.cost + GetDistance(newCurCell.GameObject.Transform.GridPosition, newCurCell.GameObject.Transform.GridPosition);
 
                     Cell neighbor = neighborGo.GetComponent<Cell>();
 
+                    // Updates the cost for the current position.
                     if (newMovementCostToNeighbor < neighbor.G || !open.Contains(neighborGo))
                     {
-                        neighbor.G = newMovementCostToNeighbor;
-                        //calulate h using manhatten principle
+                        neighbor.G = newMovementCostToNeighbor; // C
+                        // Calulates H using manhatten principle
                         neighbor.H = ((Math.Abs(neighbor.GameObject.Transform.GridPosition.X - goal.X) + Math.Abs(goal.Y - neighbor.GameObject.Transform.GridPosition.Y)) * 10);
 
                         neighbor.Parent = curCellGo;
@@ -95,6 +104,12 @@ namespace BaseProject.CompositPattern.Grid
         float priority = newCost + (float)Math.Sqrt(Math.Pow(first, 2) + Math.Pow(second, 2)); // Euclidean distance
         */
 
+        /// <summary>
+        /// Reverses the found path, by going though each GameObject and finding its Parent.
+        /// </summary>
+        /// <param name="startPoint"></param>
+        /// <param name="endPoint"></param>
+        /// <returns></returns>
         private List<GameObject> RetracePath(GameObject startPoint, GameObject endPoint)
         {
             List<GameObject> path = new List<GameObject>();
@@ -140,6 +155,11 @@ namespace BaseProject.CompositPattern.Grid
             return 14 * dstX + 10 * (dstY - dstX);
         }
 
+        /// <summary>
+        /// Gets the neighbors in all 8 directions from the point
+        /// </summary>
+        /// <param name="point"></param>
+        /// <returns></returns>
         private List<GameObject> GetNeighbors(Point point)
         {
             List<GameObject> temp = new List<GameObject>();

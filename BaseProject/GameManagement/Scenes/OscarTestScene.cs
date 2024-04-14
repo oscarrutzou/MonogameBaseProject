@@ -31,7 +31,6 @@ namespace BaseProject.GameManagement.Scenes
         {
             playerFactory = new PlayerFactory();
             playerGo = playerFactory.Create();
-
             GameWorld.Instance.Instantiate(playerGo);
         }
 

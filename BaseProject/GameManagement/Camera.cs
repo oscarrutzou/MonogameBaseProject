@@ -17,7 +17,7 @@ namespace BaseProject.GameManagement
         {
             position = Vector2.Zero;   // Initialize the camera's position at the origin.
             zoom = 1f;                 // Initialize the camera's zoom level to 1f
-            maxZoom = 2.5f;            // Any higher will remove sprites since it would be inside the camera 
+            maxZoom = 2f;            // Any higher will remove sprites since it would be inside the camera 
             SetOriginCenter();
             this.moveable = moveable;
         }

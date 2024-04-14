@@ -6,13 +6,14 @@ namespace BaseProject.CompositPattern.Grid
 {
     public class Grid : Component
     {
-        public Vector2 startPostion { get; set; }
+        #region Properties
+        public Vector2 StartPostion { get; set; }
 
         public Dictionary<Point, GameObject> Cells { get; private set; } = new Dictionary<Point, GameObject>();
         public List<Point> TargetPoints { get; private set; } = new List<Point>(); //Target cell points
         private int width, height;
 
-        public int mapW, mapH;
+        public int mapW, mapH; // To use when we have a larger map than collision
 
         private bool isCentered = true;
 
@@ -22,8 +23,14 @@ namespace BaseProject.CompositPattern.Grid
         {
 
         }
+        #endregion
 
-
+        /// <summary>
+        /// Generates a grid with GameObject Cells foreach node 
+        /// </summary>
+        /// <param name="startPos"></param>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
         public void GenerateGrid(Vector2 startPos, int width, int height)
         {
             #region Set Params
@@ -38,7 +45,7 @@ namespace BaseProject.CompositPattern.Grid
                 );
             }
 
-            this.startPostion = startPos;
+            this.StartPostion = startPos;
             #endregion
 
             for (int y = 0; y < height; y++)
@@ -63,14 +70,16 @@ namespace BaseProject.CompositPattern.Grid
 
         public GameObject GetCellGameObject(Vector2 pos)
         {
-            if (pos.X < startPostion.X || pos.Y < startPostion.Y)
+            if (pos.X < StartPostion.X || pos.Y < StartPostion.Y)
             {
-                return null; // Position is negative, otherwise it will make a invisable tile in the debug, since it cast to int, then it gets rounded to 0 and results in row and column
+                return null; // Position is negative, otherwise it will make a invisible tile in the debug, since it cast to int, then it gets rounded to 0 and results in row and column
             }
 
-            int gridX = (int)((pos.X - startPostion.X) / (Cell.demension * Cell.scaleSize.X));
-            int gridY = (int)((pos.Y - startPostion.Y) / (Cell.demension * Cell.scaleSize.Y));
+            // Calculates the position of each point. Maybe remove the zoom
+            int gridX = (int)((pos.X - StartPostion.X) / (Cell.demension * Cell.scaleSize.X * GameWorld.Instance.WorldCam.zoom));
+            int gridY = (int)((pos.Y - StartPostion.Y) / (Cell.demension * Cell.scaleSize.Y * GameWorld.Instance.WorldCam.zoom));
 
+            // Checks if its inside the grid.
             if (0 <= gridX && gridX < width && 0 <= gridY && gridY < height)
             {
                 return Cells[new Point(gridX, gridY)];

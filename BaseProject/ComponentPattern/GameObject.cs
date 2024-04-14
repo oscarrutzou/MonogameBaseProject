@@ -6,8 +6,10 @@ using System.Linq;
 
 namespace BaseProject.CompositPattern
 {
-    // Make another one, where it just adds the gameobject to a Dictionary when a new type is created?
-    // That is not one of the normal types like, animation, collision, spriterenderer and so on.
+    /// <summary>
+    /// Uses the type to make different lists in the SceneData.
+    /// Only make a new type, if its a object type that there is a lot of, and we need to get references to them e.g collsion.
+    /// </summary>
     public enum GameObjectTypes
     {
         Cell,
@@ -24,10 +26,16 @@ namespace BaseProject.CompositPattern
 
         public GameObjectTypes Type { get; set; } = GameObjectTypes.Default;
 
-
+        /// <summary>
+        /// Adds a component to the GameObject, with a empty contructer.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
         public T AddComponent<T>() where T : Component
         {
             Type componentType = typeof(T);
+            // Finds the contructers, and returns the empty contructer.
             var constructor = componentType.GetConstructors().FirstOrDefault(c =>
             {
                 var parameters = c.GetParameters();
@@ -36,8 +44,9 @@ namespace BaseProject.CompositPattern
 
             if (constructor != null)
             {
+                // Makes a component and adds "this" gameobject to the params.
                 T component = (T)Activator.CreateInstance(componentType, this);
-                components[componentType] = component;
+                components[componentType] = component; // Adds the component to the GameObject
                 return component;
             }
             else
@@ -46,18 +55,25 @@ namespace BaseProject.CompositPattern
             }
         }
 
+        /// <summary>
+        /// <para>Adds a component to the GameObject. The GameObject shouldnt be in here too, only the params after in the contructer.</para>
+        /// <para>Remember there still need to be a empty contructer</para>
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="additionalParams"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
         public T AddComponent<T>(params object[] additionalParams) where T : Component
         {
             Type componentType = typeof(T);
             try
             {
-                //Finds the constructor with the correct params
-                object[] allParams = new object[1 + additionalParams.Length]; //Sets all params in an array
-                allParams[0] = this;
-                Array.Copy(additionalParams, 0, allParams, 1, additionalParams.Length);
+                object[] allParams = new object[1 + additionalParams.Length]; // Generates a array with the correct params lenght.
+                allParams[0] = this; // Since the base first param is the parent gameobject, we can set the first param to this Gameobject.
+                Array.Copy(additionalParams, 0, allParams, 1, additionalParams.Length); // Copies extra params into the array.
 
-                T component = (T)Activator.CreateInstance(componentType, allParams);
-                components[componentType] = component;
+                T component = (T)Activator.CreateInstance(componentType, allParams); // Creates a component with the correct params
+                components[componentType] = component; // Adds the component to the GameObject
                 return component;
             }
             catch (Exception)
@@ -66,7 +82,11 @@ namespace BaseProject.CompositPattern
             }
         }
 
-
+        /// <summary>
+        /// When used in other Component scripts, remember to first call this in the Awake or Start, so it dosent return null
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
         public T GetComponent<T>() where T : Component
         {
             Type componentType = typeof(T);
@@ -110,15 +130,28 @@ namespace BaseProject.CompositPattern
             }
         }
 
+        public void OnCollisionEnter(Collider collider)
+        {
+            foreach (var component in components.Values)
+            {
+                component.OnCollisionEnter(collider);
+            }
+        }
+
         private Component AddComponentWithExistingValues(Component component)
         {
             components[component.GetType()] = component;
             return component;
         }
 
+        /// <summary>
+        /// Clones the current gameObject, with the existing values of the component.
+        /// </summary>
+        /// <returns></returns>
         public object Clone()
         {
             GameObject go = new GameObject();
+            go.Transform = Transform; // Sets the transform to be the same
             foreach (Component component in components.Values)
             {
                 Component newComponent = go.AddComponentWithExistingValues(component.Clone() as Component);
@@ -127,6 +160,11 @@ namespace BaseProject.CompositPattern
             return go;
         }
 
+        /// <summary>
+        /// Need a SpriteRenderer to work, and sets the layer though that component.
+        /// </summary>
+        /// <param name="layerDepth"></param>
+        /// <exception cref="Exception"></exception>
         public void SetLayerDepth(LAYERDEPTH layerDepth)
         {
             SpriteRenderer sr = GetComponent<SpriteRenderer>();
@@ -139,12 +177,6 @@ namespace BaseProject.CompositPattern
             throw new Exception($"You need to add a SpriteRenderer to set the layerdepth");
         }
 
-        public void OnCollisionEnter(Collider collider)
-        {
-            foreach (var component in components.Values)
-            {
-                component.OnCollisionEnter(collider);
-            }
-        }
+
     }
 }
