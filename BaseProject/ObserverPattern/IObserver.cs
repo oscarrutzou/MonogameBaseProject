@@ -1,8 +1,7 @@
-﻿
-namespace BaseProject.ObserverPattern
+﻿namespace BaseProject.ObserverPattern;
+
+// Oscar
+public interface IObserver
 {
-    public interface IObserver
-    {
-        public void UpdateObserver();
-    }
+    public void UpdateObserver();
 }

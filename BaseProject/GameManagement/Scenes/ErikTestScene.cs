@@ -16,9 +16,9 @@ namespace BaseProject.GameManagement.Scenes
     
         }
 
-        public override void Update(GameTime gameTime)
+        public override void Update()
         {
-            base.Update(gameTime);
+            base.Update();
         }
 
         public override void DrawInWorld(SpriteBatch spriteBatch)

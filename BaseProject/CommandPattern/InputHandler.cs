@@ -1,153 +1,325 @@
-﻿using BaseProject.GameManagement;
+﻿using BaseProject.CommandPattern.Commands;
+using BaseProject.CompositPattern;
+using BaseProject.GameManagement;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using System.Collections.Generic;
-using BaseProject.CommandPattern.Commands;
+using System.Linq;
 
-namespace BaseProject.CommandPattern
+namespace BaseProject.CommandPattern;
+
+public enum ScrollWheelState
 {
-    public enum ScrollWheelState
+    Up, Down
+}
+
+public enum MouseCmdState
+{
+    Left, Right
+}
+
+// Oscar
+public class InputHandler
+{
+    #region Properties
+
+    private static InputHandler instance;
+    public static InputHandler Instance
+    { get { return instance ??= instance = new InputHandler(); } }
+
+    public KeyboardState KeyState;
+    public MouseState MouseState;
+    public Vector2 MouseInWorld, MouseOnUI;
+    public bool DebugMode;
+    public GameObject MouseGo;
+
+    private Dictionary<Keys, List<Command>> _keybindsUpdate = new();
+    private Dictionary<Keys, List<Command>> _keybindsButtonDown = new();
+    private Dictionary<MouseCmdState, List<Command>> _mouseButtonUpdateCommands = new();
+    private Dictionary<MouseCmdState, List<Command>> _mouseButtonDownCommands = new();
+    private Dictionary<ScrollWheelState, List<Command>> _scrollWheelCommands = new();
+
+    private KeyboardState _previousKeyState;
+    private MouseState _previousMouseState;
+
+    private List<Command> _allCommands = new List<Command>();
+
+    #endregion Properties
+
+    private InputHandler()
     {
-        Up,
-        Down
+        SetBaseKeys();
     }
 
-    public class InputHandler
+    private void SetBaseKeys()
     {
-        #region Properties
-        private static InputHandler instance;
-        public static InputHandler Instance { get { return instance ??= instance = new InputHandler(); } }
+        AddMouseButtonDownCommand(MouseCmdState.Left, new CheckButtonCmd());
+        AddKeyButtonDownCommand(Keys.Escape, new QuitCommand());
+    }
 
-        // Keyboard commands
-        private Dictionary<Keys, ICommand> keybindsUpdate = new Dictionary<Keys, ICommand>();
-        private Dictionary<Keys, ICommand> keybindsButtonDown = new Dictionary<Keys, ICommand>();
+    #region Command
 
-        // Mouse Commands
-        private Dictionary<ButtonState, ICommand> mouseButtonUpdateCommands = new Dictionary<ButtonState, ICommand>();
-        private Dictionary<ButtonState, ICommand> mouseButtonDownCommands = new Dictionary<ButtonState, ICommand>();
-        private Dictionary<ScrollWheelState, ICommand> scrollWheelCommands = new Dictionary<ScrollWheelState, ICommand>();
+    #region Add/Remove
 
-
-        public Vector2 mouseInWorld, mouseOnUI;
-        public bool mouseOutOfBounds;
-        public float zoom = 1f;
-        #endregion
-
-        private InputHandler()
+    public void AddKeyUpdateCommand(Keys inputKey, Command command)
+    {
+        if (!_keybindsUpdate.ContainsKey(inputKey))
         {
-            AddKeyUpdateCommand(Keys.Escape, new QuitCommand());
+            _keybindsUpdate[inputKey] = new List<Command>();
+        }
+        _keybindsUpdate[inputKey].Add(command);
+    }
 
-            AddScrollWheelCommand(ScrollWheelState.Up, new ZoomCommand(-0.1f));
-            AddScrollWheelCommand(ScrollWheelState.Down, new ZoomCommand(0.1f));
+    public void AddKeyButtonDownCommand(Keys inputKey, Command command)
+    {
+        if (!_keybindsButtonDown.ContainsKey(inputKey))
+        {
+            _keybindsButtonDown[inputKey] = new List<Command>();
+        }
+        _keybindsButtonDown[inputKey].Add(command);
+    }
+
+    public void AddMouseUpdateCommand(MouseCmdState inputButton, Command command)
+    {
+        if (!_mouseButtonUpdateCommands.ContainsKey(inputButton))
+        {
+            _mouseButtonUpdateCommands[inputButton] = new List<Command>();
+        }
+        _mouseButtonUpdateCommands[inputButton].Add(command);
+    }
+
+    public void AddMouseButtonDownCommand(MouseCmdState inputButton, Command command)
+    {
+        if (!_mouseButtonDownCommands.ContainsKey(inputButton))
+        {
+            _mouseButtonDownCommands[inputButton] = new List<Command>();
+        }
+        _mouseButtonDownCommands[inputButton].Add(command);
+    }
+
+    public void AddScrollWheelCommand(ScrollWheelState scrollWheelState, Command command)
+    {
+        if (!_scrollWheelCommands.ContainsKey(scrollWheelState))
+        {
+            _scrollWheelCommands[scrollWheelState] = new List<Command>();
+        }
+        _scrollWheelCommands[scrollWheelState].Add(command);
+    }
+
+    public void RemoveKeyUpdateCommand(Keys inputKey, Command commandToDelete = null)
+    {
+        if (!_keybindsUpdate.ContainsKey(inputKey)) return;
+
+        if (commandToDelete != null)
+            _keybindsUpdate[inputKey].Remove(commandToDelete);
+        else
+            _keybindsUpdate[inputKey].Clear();
+    }
+
+    public void RemoveKeyButtonDownCommand(Keys inputKey, Command commandToDelete = null)
+    {
+        if (!_keybindsButtonDown.ContainsKey(inputKey)) return;
+
+        if (commandToDelete != null)
+            _keybindsButtonDown[inputKey].Remove(commandToDelete);
+        else
+            _keybindsButtonDown[inputKey].Clear();
+    }
+
+    public void RemoveMouseUpdateCommand(MouseCmdState inputButton, Command commandToDelete = null)
+    {
+        if (!_mouseButtonUpdateCommands.ContainsKey(inputButton)) return;
+
+        if (commandToDelete != null)
+            _mouseButtonUpdateCommands[inputButton].Remove(commandToDelete);
+        else
+            _mouseButtonUpdateCommands[inputButton].Clear();
+    }
+
+    public void RemoveMouseButtonDownCommand(MouseCmdState inputButton, Command commandToDelete = null)
+    {
+        if (!_mouseButtonDownCommands.ContainsKey(inputButton)) return;
+
+        if (commandToDelete != null)
+            _mouseButtonDownCommands[inputButton].Remove(commandToDelete);
+        else
+            _mouseButtonDownCommands[inputButton].Clear();
+    }
+
+    public void RemoveScrollWheelCommand(ScrollWheelState scrollWheelState, Command commandToDelete = null)
+    {
+        if (!_scrollWheelCommands.ContainsKey(scrollWheelState)) return;
+
+        if (commandToDelete != null)
+            _scrollWheelCommands[scrollWheelState].Remove(commandToDelete);
+        else
+            _scrollWheelCommands[scrollWheelState].Clear();
+    }
+
+
+    /// <summary>
+    /// Base Commands are the ones in the InputHandler, in the SetBaseKeys() method.
+    /// </summary>
+    public void RemoveAllExeptBaseCommands()
+    {
+        _keybindsUpdate.Clear();
+        _keybindsButtonDown.Clear();
+        _mouseButtonUpdateCommands.Clear();
+        _mouseButtonDownCommands.Clear();
+        _scrollWheelCommands.Clear();
+
+        _allCommands.Clear();
+        firstUpdate = true;
+
+        SetBaseKeys();
+    }
+
+    #endregion Add/Remove
+
+
+    private void SetAllCommands()
+    {
+        _allCommands.AddRange(_keybindsButtonDown.Values.SelectMany(cmdList => cmdList));
+        _allCommands.AddRange(_mouseButtonUpdateCommands.Values.SelectMany(cmdList => cmdList));
+        _allCommands.AddRange(_mouseButtonDownCommands.Values.SelectMany(cmdList => cmdList));
+        _allCommands.AddRange(_scrollWheelCommands.Values.SelectMany(cmdList => cmdList));
+    }
+
+    private bool firstUpdate = true;
+
+    public void Update()
+    {
+        if (firstUpdate)
+        {
+            SetAllCommands();
+            firstUpdate = false;
         }
 
-        #region Command
-        public void AddKeyUpdateCommand(Keys inputKey, ICommand command) => keybindsUpdate.Add(inputKey, command);
+        KeyState = Keyboard.GetState();
+        MouseState = Mouse.GetState();
 
-        public void AddKeyButtonDownCommand(Keys inputKey, ICommand command) => keybindsButtonDown.Add(inputKey, command);
+        MouseInWorld = GetMousePositionInWorld(MouseState);
+        MouseOnUI = GetMousePositionOnUI(MouseState);
 
-        public void AddMouseUpdateCommand(ButtonState inputButton, ICommand command) => mouseButtonUpdateCommands.Add(inputButton, command);
+        if (!GameWorld.Instance.IsActive) return;
 
-        public void AddMouseButtonDownCommand(ButtonState inputButton, ICommand command) => mouseButtonDownCommands.Add(inputButton, command);
+        UpdateAllCommands();
 
-        public void AddScrollWheelCommand(ScrollWheelState scrollWheelState, ICommand command) => scrollWheelCommands.Add(scrollWheelState, command);
+        UpdateKeyCommands(KeyState);
+        UpdateMouseCommands(MouseState);
 
+        _previousKeyState = KeyState;
+        _previousMouseState = MouseState;
+    }
 
-        private KeyboardState previousKeyState;
-        private MouseState previousMouseState;
-        public void Update()
+    private void UpdateAllCommands()
+    {
+        // Updates each command
+        foreach (var cmd in _allCommands)
         {
-            KeyboardState keyState = Keyboard.GetState();
-            MouseState mouseState = Mouse.GetState();
-
-            mouseInWorld = GetMousePositionInWorld(mouseState);
-            mouseOnUI = GetMousePositionOnUI(mouseState);
-
-            UpdateKeyCommands(keyState);
-            UpdateMouseCommands(mouseState);
-
-            previousKeyState = keyState;
-            previousMouseState = mouseState;
+            cmd.Update();
         }
+    }
 
-        private void UpdateKeyCommands(KeyboardState keyState)
+    private void UpdateKeyCommands(KeyboardState keyState)
+    {
+        foreach (var pressedKey in keyState.GetPressedKeys())
         {
-            foreach (var pressedKey in keyState.GetPressedKeys())
+            if (_keybindsUpdate.TryGetValue(pressedKey, out List<Command> cmds) && cmds.Count > 0) // Commands that happen every update
             {
-                if (keybindsUpdate.TryGetValue(pressedKey, out ICommand cmd)) // Commands that happend every update
+                foreach (var cmd in cmds)
                 {
                     cmd.Execute();
                 }
-                if (!previousKeyState.IsKeyDown(pressedKey) && keyState.IsKeyDown(pressedKey)) // Commands that only happens once every time the button gets pressed
+            }
+            if (!_previousKeyState.IsKeyDown(pressedKey) && keyState.IsKeyDown(pressedKey)) // Commands that only happens once every time the button gets pressed
+            {
+                if (_keybindsButtonDown.TryGetValue(pressedKey, out List<Command> cmdsBd) && cmdsBd.Count > 0)
                 {
-                    if (keybindsButtonDown.TryGetValue(pressedKey, out ICommand cmdBd))
+                    foreach (var cmdBd in cmdsBd)
                     {
                         cmdBd.Execute();
                     }
                 }
             }
         }
+    }
 
-        private void UpdateMouseCommands(MouseState mouseState)
+    private void UpdateMouseCommands(MouseState mouseState)
+    {
+        // Left mouse button update commands
+        if (mouseState.LeftButton == ButtonState.Pressed
+            && _mouseButtonUpdateCommands.TryGetValue(MouseCmdState.Left, out List<Command> cmdsLeft) && cmdsLeft.Count > 0)
         {
-            // Left mouse button update commands
-            if (mouseState.LeftButton == ButtonState.Pressed 
-                && mouseButtonUpdateCommands.TryGetValue(ButtonState.Pressed, out ICommand cmdLeft))
+            foreach (var cmdLeft in cmdsLeft)
             {
                 cmdLeft.Execute();
             }
+        }
 
-            // Left mouse button down commands
-            if (previousMouseState.LeftButton == ButtonState.Released 
-                && mouseState.LeftButton == ButtonState.Pressed 
-                && mouseButtonDownCommands.TryGetValue(ButtonState.Pressed, out ICommand cmdBdLeft))
+        // Left mouse button down commands
+        if (_previousMouseState.LeftButton == ButtonState.Released
+            && mouseState.LeftButton == ButtonState.Pressed
+            && _mouseButtonDownCommands.TryGetValue(MouseCmdState.Left, out List<Command> cmdsBdLeft) && cmdsBdLeft.Count > 0)
+        {
+            foreach (var cmdBdLeft in cmdsBdLeft)
             {
                 cmdBdLeft.Execute();
             }
+        }
 
-            // Right mouse button update commands
-            if (mouseState.RightButton == ButtonState.Pressed 
-                && mouseButtonUpdateCommands.TryGetValue(ButtonState.Pressed, out ICommand cmdRight))
+        // Right mouse button update commands
+        if (mouseState.RightButton == ButtonState.Pressed
+            && _mouseButtonUpdateCommands.TryGetValue(MouseCmdState.Right, out List<Command> cmdsRight) && cmdsRight .Count > 0)
+        {
+            foreach (var cmdRight in cmdsRight)
             {
                 cmdRight.Execute();
             }
+        }
 
-            // Right mouse button down commands
-            if (previousMouseState.RightButton == ButtonState.Released 
-                && mouseState.RightButton == ButtonState.Pressed 
-                && mouseButtonDownCommands.TryGetValue(ButtonState.Pressed, out ICommand cmdBdRight))
+        // Right mouse button down commands
+        if (_previousMouseState.RightButton == ButtonState.Released
+            && mouseState.RightButton == ButtonState.Pressed
+            && _mouseButtonDownCommands.TryGetValue(MouseCmdState.Right, out List<Command> cmdsBdRight) && cmdsBdRight.Count > 0)
+        {
+            foreach (var cmdBdRight in cmdsBdRight)
             {
                 cmdBdRight.Execute();
             }
+        }
 
-            // Checks the Schoold wheel and gets the appropriately command
-            if (previousMouseState.ScrollWheelValue != mouseState.ScrollWheelValue
-                && scrollWheelCommands.TryGetValue(
-                    mouseState.ScrollWheelValue > previousMouseState.ScrollWheelValue 
-                    ? ScrollWheelState.Up : ScrollWheelState.Down, out ICommand cmdScroll))
+        // Checks the Scroll wheel and gets the appropriately command
+        if (_previousMouseState.ScrollWheelValue != mouseState.ScrollWheelValue
+            && _scrollWheelCommands.TryGetValue(
+                mouseState.ScrollWheelValue > _previousMouseState.ScrollWheelValue
+                ? ScrollWheelState.Up : ScrollWheelState.Down, out List<Command> cmdsScroll) && cmdsScroll.Count > 0)
+        {
+            foreach (var cmdScroll in cmdsScroll)
             {
                 cmdScroll.Execute();
             }
-
-            previousMouseState = mouseState;
         }
 
-        #endregion
+        _previousMouseState = mouseState;
+    }
 
-        private Vector2 GetMousePositionInWorld(MouseState mouseState)
-        {
-            Vector2 pos = new Vector2(mouseState.X, mouseState.Y);
-            Matrix invMatrix = Matrix.Invert(GameWorld.Instance.WorldCam.GetMatrix());
-            return Vector2.Transform(pos, invMatrix);
-        }
+    #endregion Command
 
-        private Vector2 GetMousePositionOnUI(MouseState mouseState)
-        {
-            Vector2 pos = new Vector2(mouseState.X, mouseState.Y);
-            Matrix invMatrix = Matrix.Invert(GameWorld.Instance.UiCam.GetMatrix());
-            Vector2 returnValue = Vector2.Transform(pos, invMatrix);
-            mouseOutOfBounds = (returnValue.X < 0 || returnValue.Y < 0 || returnValue.X > GameWorld.Instance.GfxManager.PreferredBackBufferWidth || returnValue.Y > GameWorld.Instance.GfxManager.PreferredBackBufferHeight);
-            return returnValue;
-        }
+    private Vector2 GetMousePositionInWorld(MouseState mouseState)
+    {
+        Vector2 pos = new Vector2(mouseState.X, mouseState.Y);
+        Matrix invMatrix = Matrix.Invert(GameWorld.Instance.WorldCam.GetMatrix());
+        return Vector2.Transform(pos, invMatrix);
+    }
+
+    private Vector2 GetMousePositionOnUI(MouseState mouseState)
+    {
+        Camera uiCam = GameWorld.Instance.UiCam;
+        Vector2 pos = new Vector2(mouseState.X, mouseState.Y);
+        Matrix invMatrix = Matrix.Invert(uiCam.GetMatrix());
+        Vector2 returnValue = Vector2.Transform(pos, invMatrix);
+        //MouseOutOfBounds = (returnValue.X < uiCam.TopLeft.X || returnValue.Y < uiCam.TopLeft.Y || returnValue.X > uiCam.BottomRight.X || returnValue.Y > uiCam.BottomRight.Y);
+        return returnValue;
     }
 }

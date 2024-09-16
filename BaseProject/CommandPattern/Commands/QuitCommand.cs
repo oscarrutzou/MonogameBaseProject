@@ -1,12 +1,11 @@
 ﻿using BaseProject.GameManagement;
 
-namespace BaseProject.CommandPattern.Commands
+namespace BaseProject.CommandPattern.Commands;
+
+internal class QuitCommand : Command
 {
-    internal class QuitCommand : ICommand
+    public override void Execute()
     {
-        public void Execute()
-        {
-            GameWorld.Instance.Exit();
-        }
+        GameWorld.Instance.Exit();
     }
 }

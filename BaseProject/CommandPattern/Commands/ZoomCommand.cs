@@ -1,20 +1,16 @@
-﻿
+﻿using BaseProject.GameManagement;
 
-using BaseProject.GameManagement;
-using Microsoft.Xna.Framework;
+namespace BaseProject.CommandPattern.Commands;
 
-namespace BaseProject.CommandPattern.Commands
+internal class ZoomCommand : Command
 {
-    internal class ZoomCommand : ICommand
-    {
-        private float zoomAmount;
-        internal ZoomCommand(float zoomAmount) { 
-            this.zoomAmount = zoomAmount;
-        }
+    private float zoomAmount;
+    internal ZoomCommand(float zoomAmount) { 
+        this.zoomAmount = zoomAmount;
+    }
 
-        public void Execute()
-        {
-            GameWorld.Instance.WorldCam.ChangeZoom(zoomAmount); // Only change zoom on worldCam
-        }
+    public override void Execute()
+    {
+        GameWorld.Instance.WorldCam.ChangeZoom(zoomAmount); // Only change zoom on worldCam
     }
 }

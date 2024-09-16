@@ -1,14 +1,11 @@
-﻿
+﻿namespace BaseProject.ObserverPattern;
 
-namespace BaseProject.ObserverPattern
+// Oscar
+public interface ISubject
 {
-    public interface ISubject
-    {
-        public void Attach(IObserver observer);
-        public void Detach(IObserver observer);
-        /// <summary>
-        /// Notify the observer/observers when a action happens
-        /// </summary>
-        public void Notify();
-    }
+    public void Attach(IObserver observer);
+
+    public void Detach(IObserver observer);
+
+    public void Notify();
 }

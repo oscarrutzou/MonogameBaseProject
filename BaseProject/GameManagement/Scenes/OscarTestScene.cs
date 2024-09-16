@@ -7,67 +7,83 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using BaseProject.ObserverPattern;
+using BaseProject.ComponentPattern.Particles;
+using BaseProject.ComponentPattern.Particles.BirthModifiers;
+using BaseProject.ComponentPattern.Particles.Modifiers;
+using System.Collections.Generic;
 
 
 namespace BaseProject.GameManagement.Scenes
 {
     public class OscarTestScene : Scene, IObserver 
     {
-        private PlayerFactory playerFactory;
-        private GameObject playerGo;
+        private GameObject _playerGo;
 
-        private Vector2 playerPos;
+        private Vector2 _playerPos;
+        private Player _player;
 
         public override void Initialize()
         {
             MakePlayer();
-
+            TestEmitter();
             SetCommands();
         }
+        ParticleEmitter _emitter;
+        private void TestEmitter()
+        {
+            GameObject go = EmitterFactory.CreateParticleEmitter("Test", Vector2.Zero, new Interval(100, 400), new Interval(-MathHelper.Pi, MathHelper.Pi), 200, new Interval(2000, 3000), 1000);
+            _emitter = go.GetComponent<ParticleEmitter>();
+            _emitter.AddBirthModifier(new TextureBirthModifier(TextureNames.Pixel));
+            //emitter.AddModifier(new ColorRangeModifier(true));
+            //emitter.AddBirthModifier(new ColorBirthModifier(Color.Black));
+            _emitter.AddModifier(new ColorRangeModifier(new Color[] {Color.Aqua, Color.Black, Color.Transparent}));
+            _emitter.AddModifier(new ScaleModifier(10, 1));
+            _emitter.LayerName = LayerDepthTypes.Default;
+            _emitter.StartEmitter();
+            GameWorld.Instance.Instantiate(go);
+        }
 
-
-        
         private void MakePlayer()
         {
-            playerFactory = new PlayerFactory();
-            playerGo = playerFactory.Create();
-            GameWorld.Instance.Instantiate(playerGo);
+            _playerGo = PlayerFactory.Create();
+            GameWorld.Instance.Instantiate(_playerGo);
         }
 
-        Player player;
         private void SetCommands()
         {
-            player = playerGo.GetComponent<Player>();
-            player.Attach(this);
-            InputHandler.Instance.AddKeyUpdateCommand(Keys.D, new MoveCommand(player, new Vector2(1, 0)));
-            InputHandler.Instance.AddKeyUpdateCommand(Keys.A, new MoveCommand(player, new Vector2(-1, 0)));
-            InputHandler.Instance.AddKeyUpdateCommand(Keys.W, new MoveCommand(player, new Vector2(0, -1)));
-            InputHandler.Instance.AddKeyUpdateCommand(Keys.S, new MoveCommand(player, new Vector2(0, 1)));
+            _player = _playerGo.GetComponent<Player>();
+            _player.Attach(this);
+            InputHandler.Instance.AddKeyUpdateCommand(Keys.D, new MoveCommand(_player, new Vector2(1, 0)));
+            InputHandler.Instance.AddKeyUpdateCommand(Keys.A, new MoveCommand(_player, new Vector2(-1, 0)));
+            InputHandler.Instance.AddKeyUpdateCommand(Keys.W, new MoveCommand(_player, new Vector2(0, -1)));
+            InputHandler.Instance.AddKeyUpdateCommand(Keys.S, new MoveCommand(_player, new Vector2(0, 1)));
         }
 
-        public override void Update(GameTime gameTime)
+        public override void Update()
         {
-            
-            base.Update(gameTime);
+            base.Update();
         }
 
-        public override void DrawInWorld(SpriteBatch spriteBatch)
-        {
-            spriteBatch.Draw(GlobalTextures.Textures[TextureNames.Pixel], Vector2.Zero, Color.Black);
-
-            base.DrawInWorld(spriteBatch);
-        }
-
+        Vector2 offSet = new Vector2(0, 30);
         public override void DrawOnScreen(SpriteBatch spriteBatch)
         {
-            spriteBatch.DrawString(GlobalTextures.DefaultFont, $"PlayerPos {playerPos}", GameWorld.Instance.UiCam.TopLeft, Color.Black);
+            Vector2 pos = GameWorld.Instance.UiCam.TopLeft;
+            spriteBatch.DrawString(GlobalTextures.DefaultFont, $"PlayerPos {_playerPos}", pos, Color.Black);
+            pos += offSet;
+
+            int amount = 0;
+            foreach (List<GameObject> obj in SceneData.Instance.GameObjectLists.Values)
+            {
+                amount += obj.Count;
+            }
+            spriteBatch.DrawString(GlobalTextures.DefaultFont, $"GameObjects in scene {amount}", pos, Color.Black);
 
             base.DrawOnScreen(spriteBatch);
         }
 
         public void UpdateObserver()
         {
-            playerPos = player.GameObject.Transform.Position;
+            _playerPos = _player.GameObject.Transform.Position;
         }
     }
 }
